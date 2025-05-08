@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: arbitrage-bot
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn arbitrage_bot_fastapi:app --host 0.0.0.0 --port 10000
+    plan: free
+    branch: main
+    autoDeploy: true
