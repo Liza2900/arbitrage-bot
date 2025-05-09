@@ -1,51 +1,39 @@
-import os
 from fastapi import FastAPI, Request
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, ContextTypes, CallbackQueryHandler
-
-from arbitrage import find_arbitrage_opportunities
-
-TOKEN = os.getenv("BOT_TOKEN")  # додай в Render як змінну середовища
-WEBHOOK_PATH = f"/webhook/{TOKEN}"
+from telegram import Update
+from telegram.ext import (
+    Application, CommandHandler, ContextTypes
+)
+import os
 
 app = FastAPI()
-bot_app = Application.builder().token(TOKEN).build()
 
-# Стартова команда
+BOT_TOKEN = os.getenv("BOT_TOKEN")  # або встав токен напряму
+
+# Telegram application
+telegram_app = Application.builder().token(BOT_TOKEN).build()
+
+# /start handler
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    keyboard = [
-        [InlineKeyboardButton("🔍 Знайти арбітраж", callback_data="find_arbitrage")]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text("Натисни кнопку нижче, щоб знайти арбітражні можливості:", reply_markup=reply_markup)
+    await update.message.reply_text("Привіт! Бот працює.")
 
-# Обробка кнопки
-async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
+telegram_app.add_handler(CommandHandler("start", start))
 
-    await query.edit_message_text("Шукаю арбітражні можливості...")
-    result = await find_arbitrage_opportunities()
+@app.on_event("startup")
+async def on_startup():
+    await telegram_app.initialize()
+    await telegram_app.start()
 
-    if not result:
-        await query.message.reply_text("Нічого не знайдено.")
-    else:
-        text = "\n\n".join(result)
-        await query.message.reply_text(f"🔁 Знайдено:\n\n{text}")
+@app.on_event("shutdown")
+async def on_shutdown():
+    await telegram_app.stop()
 
-# Додаємо хендлери
-bot_app.add_handler(CommandHandler("start", start))
-bot_app.add_handler(CallbackQueryHandler(handle_button))
-
-# Webhook endpoint
-@app.post(WEBHOOK_PATH)
-async def telegram_webhook(req: Request):
-    data = await req.json()
-    update = Update.de_json(data, bot_app.bot)
-    await bot_app.process_update(update)
-    return {"ok": True}
-
-# Проста перевірка
 @app.get("/")
 async def root():
-    return {"message": "Arbitrage bot is running via webhook"}
+    return {"message": "Arbitrage Bot is running."}
+
+@app.post("/webhook")
+async def telegram_webhook(request: Request):
+    data = await request.json()
+    update = Update.de_json(data, telegram_app.bot)
+    await telegram_app.process_update(update)
+    return {"status": "ok"}
