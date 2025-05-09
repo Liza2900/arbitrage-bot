@@ -4,42 +4,58 @@ from exchanges.bitget import get_bitget_prices
 from exchanges.okx import get_okx_prices
 from exchanges.bingx import get_bingx_prices
 
+PRICE_LIMIT = 15
+VOLUME_LIMIT = 10
+
 async def find_arbitrage_opportunities():
+    # Отримуємо дані
+    bybit = await get_bybit_prices()
+    kucoin = await get_kucoin_prices()
+    bitget = await get_bitget_prices()
+    okx = await get_okx_prices()
+    bingx = await get_bingx_prices()
+
     exchanges = {
-        "bybit": await get_bybit_prices(),
-        "kucoin": await get_kucoin_prices(),
-        "bitget": await get_bitget_prices(),
-        "okx": await get_okx_prices(),
-        "bingx": await get_bingx_prices(),
+        "bybit": bybit,
+        "kucoin": kucoin,
+        "bitget": bitget,
+        "okx": okx,
+        "bingx": bingx,
     }
 
-    results = []
+    # Збір унікальних символів
+    all_symbols = set()
+    for data in exchanges.values():
+        all_symbols.update(data.keys())
 
-    exchange_names = list(exchanges.keys())
+    opportunities = []
 
-    for symbol in set().union(*[set(data.keys()) for data in exchanges.values()]):
+    for symbol in all_symbols:
         prices = []
-        for name in exchange_names:
-            data = exchanges[name].get(symbol)
-            if data and data["price"] < 15 and data["volume"] >= 10:
-                prices.append({
-                    "exchange": name,
-                    "price": data["price"],
-                    "volume": data["volume"]
-                })
+        for name, data in exchanges.items():
+            if symbol in data:
+                info = data[symbol]
+                price = info["price"]
+                volume = info["volume"]
+                if price <= PRICE_LIMIT and volume >= VOLUME_LIMIT:
+                    prices.append((name, price))
 
-        for buy in prices:
-            for sell in prices:
-                if buy["exchange"] != sell["exchange"]:
-                    profit_pct = (sell["price"] - buy["price"]) / buy["price"] * 100
-                    if profit_pct >= 0.8:
-                        results.append({
-                            "symbol": symbol,
-                            "buy_exchange": buy["exchange"],
-                            "sell_exchange": sell["exchange"],
-                            "buy_price": buy["price"],
-                            "sell_price": sell["price"],
-                            "profit_percent": round(profit_pct, 2)
-                        })
+        if len(prices) < 2:
+            continue
 
-    return results
+        # Знаходимо максимальну і мінімальну ціну
+        prices.sort(key=lambda x: x[1])
+        min_exchange, min_price = prices[0]
+        max_exchange, max_price = prices[-1]
+
+        spread_percent = ((max_price - min_price) / min_price) * 100
+
+        if spread_percent >= 0.8:
+            opportunities.append({
+                "symbol": symbol,
+                "buy": {"exchange": min_exchange, "price": min_price},
+                "sell": {"exchange": max_exchange, "price": max_price},
+                "spread_percent": round(spread_percent, 2)
+            })
+
+    return opportunities
