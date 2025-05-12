@@ -1,4 +1,4 @@
-app = "arbitrage-bot-delf7g" 
+app = "arbitrage-bot-udqe5g" 
 
 [build]
   builder = "paketobuildpacks/builder:base"
