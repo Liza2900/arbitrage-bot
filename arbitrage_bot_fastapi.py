@@ -26,6 +26,11 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
+    if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("arbitrage_bot_fastapi:app", host="0.0.0.0", port=8080)
+
+
     if query.data == "find_arbitrage":
         await query.edit_message_text("🔄 Шукаю можливості арбітражу...")
         result = await find_arbitrage_opportunities()
