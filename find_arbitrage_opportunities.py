@@ -1,7 +1,7 @@
 import logging
 
 async def find_arbitrage_opportunities():
-    bitget = kucoin = okx = bybit = bingx = {}
+    bitget = kucoin = okx = mexc = bingx = {}
 
     try:
         bitget = await get_bitget_prices()
@@ -22,10 +22,10 @@ async def find_arbitrage_opportunities():
         logging.exception("❌ Помилка при отриманні цін з OKX")
 
     try:
-        bybit = await get_bybit_prices()
-        logging.info(f"✅ Bybit: отримано {len(bybit)} монет")
+        mexc = await get_mexc_prices()
+        logging.info(f"✅ Mexc: отримано {len(mexc)} монет")
     except Exception as e:
-        logging.exception("❌ Помилка при отриманні цін з Bybit")
+        logging.exception("❌ Помилка при отриманні цін з Mexc")
 
     try:
         bingx = await get_bingx_prices()
@@ -33,7 +33,7 @@ async def find_arbitrage_opportunities():
     except Exception as e:
         logging.exception("❌ Помилка при отриманні цін з BingX")
 
-    if not any([bitget, kucoin, okx, bybit, bingx]):
+    if not any([bitget, kucoin, okx, mexc, bingx]):
         logging.warning("⚠️ Жодна біржа не повернула дані — припиняю пошук арбітражу")
         return []
 
