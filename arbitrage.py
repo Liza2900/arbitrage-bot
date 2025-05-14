@@ -1,4 +1,4 @@
-from exchanges.bybit import get_bybit_prices
+from exchanges.mexc import get_mexc_prices
 from exchanges.kucoin import get_kucoin_prices
 from exchanges.bitget import get_bitget_prices
 from exchanges.okx import get_okx_prices
@@ -9,14 +9,14 @@ VOLUME_LIMIT = 10
 
 async def find_arbitrage_opportunities():
     # Отримуємо дані
-    bybit = await get_bybit_prices()
+    mexc = await get_mexc_prices()
     kucoin = await get_kucoin_prices()
     bitget = await get_bitget_prices()
     okx = await get_okx_prices()
     bingx = await get_bingx_prices()
 
     exchanges = {
-        "bybit": bybit,
+        "mexc": mexc,
         "kucoin": kucoin,
         "bitget": bitget,
         "okx": okx,
