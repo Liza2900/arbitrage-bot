@@ -13,6 +13,21 @@ WEBHOOK_URL = os.getenv("WEBHOOK_URL")  # Наприклад: https://your-bot-n
 app = FastAPI()
 application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
+# Функція для форматування результатів
+def format_opportunities(opps):
+    if not opps:
+        return "Нічого не знайдено ❌"
+
+    lines = []
+    for o in opps:
+        lines.append(
+            f"💰 <b>{o['symbol']}</b>\n"
+            f"Купити: <b>{o['buy']['exchange']}</b> — {o['buy']['price']}$\n"
+            f"Продати: <b>{o['sell']['exchange']}</b> — {o['sell']['price']}$\n"
+            f"📈 Спред: <b>{o['spread_percent']}%</b>\n"
+        )
+    return "\n".join(lines)
+
 
 # Команда /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -29,8 +44,8 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if query.data == "find_arbitrage":
         await query.edit_message_text("🔄 Шукаю можливості арбітражу...")
         result = await find_arbitrage_opportunities()
-        text = result if result else "Нічого не знайдено ❌"
-        await context.bot.send_message(chat_id=query.message.chat_id, text=text)
+        text = format_opportunities(result)
+        await context.bot.send_message(chat_id=query.message.chat_id, text=text[:4000], parse_mode="HTML")
 
 
 # Додаємо хендлери
@@ -60,7 +75,7 @@ async def on_startup():
     await application.start()
 
 
-# ✅ Локальний запуск (тільки для відлагодження — НЕ запускається на Render)
+# ✅ Локальний запуск (для debug, не працює на Render)
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("arbitrage_bot_fastapi:app", host="0.0.0.0", port=8080)
