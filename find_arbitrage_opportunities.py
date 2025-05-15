@@ -1,10 +1,12 @@
 import logging
-
 from exchanges.bitget import get_bitget_prices
 from exchanges.kucoin import get_kucoin_prices
 from exchanges.okx import get_okx_prices
 from exchanges.mexc import get_mexc_prices
 from exchanges.bingx import get_bingx_prices
+
+# 🔽 Налаштування логування
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 PROFIT_THRESHOLD = 0.8  # відсоток
 PRICE_LIMIT = 15        # не брати монети дорожче цього
@@ -95,3 +97,4 @@ async def find_arbitrage_opportunities():
                     opportunities.append(opportunity)
 
     return sorted(opportunities, key=lambda x: x["profit_percent"], reverse=True)
+
