@@ -13,7 +13,7 @@ WEBHOOK_URL = os.getenv("WEBHOOK_URL")  # Наприклад: https://your-bot-n
 app = FastAPI()
 application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
-# Функція для форматування результатів
+# Форматування арбітражних можливостей
 def format_opportunities(opps):
     if not opps:
         return "Нічого не знайдено ❌"
@@ -29,7 +29,7 @@ def format_opportunities(opps):
     return "\n".join(lines)
 
 
-# Команда /start
+# /start команда
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [[InlineKeyboardButton("🔍 Знайти арбітраж", callback_data="find_arbitrage")]]
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -53,13 +53,13 @@ application.add_handler(CommandHandler("start", start))
 application.add_handler(CallbackQueryHandler(handle_button))
 
 
-# FastAPI стартова сторінка
+# Коренева сторінка FastAPI
 @app.get("/")
 async def root():
     return {"message": "Arbitrage Bot is running."}
 
 
-# Обробка webhook запитів від Telegram
+# Обробка вхідних webhook-запитів від Telegram
 @app.post("/webhook")
 async def telegram_webhook(request: Request):
     data = await request.json()
@@ -67,15 +67,8 @@ async def telegram_webhook(request: Request):
     await application.process_update(update)
 
 
-# Старт додатку та webhook
+# Ініціалізація бота та встановлення webhook
 @app.on_event("startup")
 async def on_startup():
     await application.initialize()
     await application.bot.set_webhook(url=f"{WEBHOOK_URL}/webhook")
-    await application.start()
-
-
-# ✅ Локальний запуск (для debug, не працює на Render)
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("arbitrage_bot_fastapi:app", host="0.0.0.0", port=8080)
