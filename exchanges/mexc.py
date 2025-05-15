@@ -10,12 +10,20 @@ async def get_mexc_prices():
     result = {}
     for item in data:
         symbol = item["symbol"]
-        if symbol.endswith("USDT"):
-            price = (float(item["bidPrice"]) + float(item["askPrice"])) / 2
-            result[symbol.replace("USDT", "")] = {
-                "price": price,
-                "bid": float(item["bidPrice"]),
-                "ask": float(item["askPrice"]),
-                "volume": 99999  # MEXC не дає обсягів
-            }
+        bid = item.get("bidPrice")
+        ask = item.get("askPrice")
+
+        # Пропускаємо, якщо ціни відсутні
+        if symbol.endswith("USDT") and bid and ask:
+            try:
+                price = (float(bid) + float(ask)) / 2
+                result[symbol.replace("USDT", "")] = {
+                    "price": price,
+                    "bid": float(bid),
+                    "ask": float(ask),
+                    "volume": 99999  # MEXC не дає обсягів
+                }
+            except ValueError:
+                continue  # Пропустити, якщо конвертація в float не вдалась
+
     return result
